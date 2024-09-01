@@ -100,7 +100,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
   } catch (error) {
     console.error('Server error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message || 'An unknown error occurred' });
+    res.status(500).json({ message: 'Server error 1', error: error.message || 'An unknown error occurred' });
   }
 });
 
