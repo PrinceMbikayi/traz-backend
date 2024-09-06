@@ -6,13 +6,28 @@ const createReport = async (req, res) => {
   console.log('Request Received:', req.body);
   console.log('File Uploaded:', req.file);
 
-  const { documentName, otherDocumentName, fullName, phoneNumber, city } = req.body;
+  const { 
+    documentName, 
+    documentNature, 
+    showOtherInput, 
+    showDocumentInput, 
+    showNameInput, 
+    otherDocumentName, 
+    documentOwnerName,
+    fullName, 
+    phoneNumber, 
+    city } = req.body;
   const imageUrl = req.file ? req.file.path : null;
 
   try {
     const newReport = new Report({
       documentName,
+      documentNature: documentNature || '',
+      showOtherInput: showOtherInput || '',
+      showDocumentInput: showDocumentInput || '',
+      showNameInput: showNameInput || '',
       otherDocumentName: otherDocumentName || '',
+      documentOwnerName: documentOwnerName || '',
       fullName,
       phoneNumber,
       city,
