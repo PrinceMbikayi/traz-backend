@@ -12,10 +12,10 @@ connectDB();
 const app = express();
 
 // Middleware pour le parsing des données JSON
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 // Middleware pour le parsing des données URL-encoded
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // Middleware pour gérer les requêtes CORS
 app.use(cors());  // Si nécessaire pour gérer les requêtes cross-origin
