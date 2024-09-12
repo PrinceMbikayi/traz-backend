@@ -64,7 +64,7 @@ const registerUser = asyncHandler(async (req, res) => {
       service: 'gmail',
       auth: {
         type: 'OAuth2',
-        user: 'info@trazcongo.com', //process.env.EMAIL_USER,
+        user: process.env.EMAIL_USER,
         clientId: process.env.OAUTH_CLIENT_ID,
         clientSecret: process.env.OAUTH_CLIENT_SECRET,
         refreshToken: process.env.OAUTH_REFRESH_TOKEN,
