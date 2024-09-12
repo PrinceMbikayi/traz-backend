@@ -21,57 +21,29 @@ const registerUser = asyncHandler(async (req, res) => {
   const { firstName, lastName, email, phone, password } = req.body;
 
   try {
-    // Check if the user already exists
     const userExists = await User.findOne({ email });
 
     if (userExists) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    // Handle profile image upload
+    // Vérifier si une image a été téléchargée
     let profileImage = '';
 
+    // Si un fichier est téléchargé, l'uploader sur Cloudinary
     if (req.file) {
       try {
         const result = await cloudinary.uploader.upload(req.file.path);
-        profileImage = result.secure_url;
+        profileImage = result.secure_url; // Utiliser l'URL sécurisé retourné par Cloudinary
       } catch (uploadError) {
         console.error('Error uploading image to Cloudinary:', uploadError);
         return res.status(500).json({ message: 'Image upload failed' });
       }
     }
 
-    // Generate confirmation code
-    const confirmationCode = crypto.randomBytes(2).toString('hex');
+    // Génération du code de confirmation
+    const confirmationCode = crypto.randomBytes(2).toString('hex'); // 4 chiffres hexadécimaux
 
-    // Obtain an OAuth2 access token
-    const accessToken = await oauth2Client.getAccessToken();
-
-    // Setup Nodemailer transporter
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        type: 'OAuth2',
-        user: process.env.EMAIL_USER,
-        clientId: process.env.OAUTH_CLIENT_ID,
-        clientSecret: process.env.OAUTH_CLIENT_SECRET,
-        refreshToken: process.env.OAUTH_REFRESH_TOKEN,
-        accessToken: accessToken.token,
-      },
-    });
-
-    // Email options
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: 'Account Confirmation Code',
-      text: `Your confirmation code is: ${confirmationCode}`,
-    };
-
-    // Send the confirmation email
-    await transporter.sendMail(mailOptions);
-
-    // Create a new user
     const user = await User.create({
       firstName,
       lastName,
@@ -81,13 +53,37 @@ const registerUser = asyncHandler(async (req, res) => {
       profileImage,
       confirmationCode,
     });
-
+    
     console.log('Confirmation Code:', confirmationCode);
 
-    // Respond with success
-    res.status(201).json({
-      message: 'User registered successfully, please check your email for the confirmation code',
-      user: {
+    // Obtenez un access token OAuth2
+    const accessToken = await oauth2Client.getAccessToken();
+
+    // Envoi de l'email avec le code de confirmation
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        type: 'OAuth2',
+        user: 'info@trazcongo.com', //process.env.EMAIL_USER,
+        clientId: process.env.OAUTH_CLIENT_ID,
+        clientSecret: process.env.OAUTH_CLIENT_SECRET,
+        refreshToken: process.env.OAUTH_REFRESH_TOKEN,
+        accessToken: accessToken.token,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: user.email,
+      subject: 'Account Confirmation Code',
+      text: `Your confirmation code is: ${confirmationCode}`,
+    };
+
+    try {
+      await transporter.sendMail(mailOptions);
+      res.status(201).json({
+        message: 'User registered successfully, please check your email for the confirmation code',
+        user: {
         _id: user._id,
         firstName: user.firstName,
         lastName: user.lastName,
@@ -95,12 +91,15 @@ const registerUser = asyncHandler(async (req, res) => {
         phone: user.phone,
         profileImage: user.profileImage,
         token: generateToken(user._id),
-      },
-    });
-
+      }
+      });
+    } catch (error) {
+      console.error('Error sending email:', error);
+      res.status(500).json({ message: 'Server error' });
+    }
   } catch (error) {
     console.error('Server error:', error);
-    res.status(500).json({ message: 'Server error 1', error: error || 'An unknown error occurred' });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
