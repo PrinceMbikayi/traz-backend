@@ -4,18 +4,29 @@ const generateToken = require('../utils/generateToken');
 const { cloudinary } = require('../config/cloudinaryConfig');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
-const { google } = require('googleapis');
+// const { google } = require('googleapis');
+
+// Configuration SMTP avec le serveur LWS
+const transporter = nodemailer.createTransport({
+  host: 'mail.trazcongo.com', // Le serveur SMTP de LWS
+  port: 465, // Port SMTP sécurisé
+  secure: true, // Utilisez SSL/TLS
+  auth: {
+    user: 'support@trazcongo.com', // Votre adresse email professionnelle
+    pass: process.env.EMAIL_PASSWORD, // Mot de passe de l'email (stocké dans .env pour plus de sécurité)
+  },
+});
 
 // Initialisation du client OAuth2 pour l'envoi d'emails
-const oauth2Client = new google.auth.OAuth2(
-  process.env.OAUTH_CLIENT_ID, // ID client
-  process.env.OAUTH_CLIENT_SECRET, // Secret client
-  'https://developers.google.com/oauthplayground' // Redirection URL
-);
+// const oauth2Client = new google.auth.OAuth2(
+//   process.env.OAUTH_CLIENT_ID, // ID client
+//   process.env.OAUTH_CLIENT_SECRET, // Secret client
+//   'https://developers.google.com/oauthplayground' // Redirection URL
+// );
 
-oauth2Client.setCredentials({
-  refresh_token: process.env.OAUTH_REFRESH_TOKEN,
-});
+// oauth2Client.setCredentials({
+//   refresh_token: process.env.OAUTH_REFRESH_TOKEN,
+// });
 
 const registerUser = asyncHandler(async (req, res) => {
   const { firstName, lastName, email, phone, password } = req.body;
@@ -57,23 +68,24 @@ const registerUser = asyncHandler(async (req, res) => {
     console.log('Confirmation Code:', confirmationCode);
 
     // Obtenez un access token OAuth2
-    const accessToken = await oauth2Client.getAccessToken();
+    // const accessToken = await oauth2Client.getAccessToken();
 
     // Envoi de l'email avec le code de confirmation
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        type: 'OAuth2',
-        user: process.env.EMAIL_USER,
-        clientId: process.env.OAUTH_CLIENT_ID,
-        clientSecret: process.env.OAUTH_CLIENT_SECRET,
-        refreshToken: process.env.OAUTH_REFRESH_TOKEN,
-        accessToken: accessToken.token,
-      },
-    });
+    // const transporter = nodemailer.createTransport({
+    //   service: 'gmail',
+    //   auth: {
+    //     type: 'OAuth2',
+    //     user: process.env.EMAIL_USER,
+    //     clientId: process.env.OAUTH_CLIENT_ID,
+    //     clientSecret: process.env.OAUTH_CLIENT_SECRET,
+    //     refreshToken: process.env.OAUTH_REFRESH_TOKEN,
+    //     accessToken: accessToken.token,
+    //   },
+    // });
 
+    // Envoi de l'email avec le code de confirmation
     const mailOptions = {
-      from: process.env.EMAIL_USER,
+      from: '"Traz Congo" <support@trazcongo.com>', // Nom et email expéditeur
       to: user.email,
       subject: 'Account Confirmation Code',
       text: `Your confirmation code is: ${confirmationCode}`,
